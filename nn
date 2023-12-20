@@ -1,0 +1,124 @@
+import numpy as np
+import tensorflow as ts
+
+def ReLu(X):
+
+	if all(X) >= 0:
+		return X
+
+	elif all(X) < 0:
+		return np.zeros(X.shape())
+	
+	else:
+		for x in X:
+			if x >= 0: 
+				pass
+			else:
+				x = 0
+	return X
+
+
+class NeuralNetwork:
+	#"Layers" is the dimentions of the network
+	#NeuralNetwork.nn contains the weights and biases
+	def __init__(self, Layers, ActivitionFunction = None):
+		self.Layers = Layers
+		self.nn = []
+		self.ActivitionFunction = ActivitionFunction
+
+		for l in range(len(self.Layers)-1):
+
+			NextLayer = self.Layers[l+1]
+
+			self.nn.append([np.random.rand(NextLayer, self.Layers[l]), np.random.rand(NextLayer)])
+
+	def Run(self, Inputs, ReturnAnZ = False):
+
+		A = [Inputs]
+		Z = []
+    
+		LayerActivition = Inputs
+
+		for layer in self.nn:
+			
+			LayerActivition = np.matmul(layer[0], LayerActivition) + layer[1]
+
+			Z.append(LayerActivition)
+				
+			match self.ActivitionFunction:
+				case "ReLu":
+					LayerActivition = ReLu(LayerActivition)
+				case "Sigmoid":
+					pass
+
+			A.append(LayerActivition)
+		A.pop(-1)
+
+		if ReturnAnZ:
+			return(LayerActivition, A, Z)
+		else:
+			return(LayerActivition) 
+
+	def Optimize(self, X, Y, LearningRate = 0.01, epochs = 150):
+		
+		for epoch in range(epochs):
+			for x,y in zip(X,Y):
+
+				P, A, Z = self.Run(x, True)
+				El = None
+				#backpropagation algorithm
+				LayerIndex = len(self.nn) - 1
+				while 0 <= LayerIndex:
+
+					if LayerIndex == len(self.nn) - 1:
+						#El= Ea ⊙ f′(zL), where l is the last layer and Ea is a vector of the dEda of l
+						El = -2 * (y - P)
+
+					else:
+						#the equation for the rate of change of Error relative to the activitions of a layer.
+						#El = ((Wl+1)T x El+1) ⊙ f′(zl)		
+						El = np.matmul(self.nn[LayerIndex + 1][0].transpose(), El)
+
+					match self.ActivitionFunction:
+						#Multiply El by the derivative of f in respect to the weighted sums of the layer l.
+						case "ReLu":
+
+							dfdZl = []
+
+							for z in Z[LayerIndex]:
+								if z < 0:
+									dfdZl.append(0)
+								else:
+									dfdZl.append(1)
+							
+							print(f"{El} * {dfdZl} = {El*dfdZl}")
+
+							El = El * dfdZl
+
+						case "Sigmoid":
+							pass
+					
+					#optimizing the biases
+					self.nn[LayerIndex][1] -= El * LearningRate
+
+					#Caculating the error in weights and optimizing them
+					for node,j_index in zip(self.nn[LayerIndex][0], range(len(self.nn[LayerIndex][0])) ):
+						for w,Ak_index in zip(node, range(len(node)) ):
+							
+							# dCdWl[j,k] = Al-1[k] * El[j]
+							dEdw = A[LayerIndex][Ak_index]
+							dEdw *= El[j_index] 
+
+							self.nn[LayerIndex][0][j_index][Ak_index] -= dEdw * LearningRate
+					LayerIndex -= 1
+
+network = NeuralNetwork([1,1])
+
+X = [np.array([1]), np.array([5]), np.array([3]), np.array([8]), np.array([15]), np.array([2]), np.array([6]), np.array([4])]
+Y = [np.array([2]), np.array([10]), np.array([6]), np.array([16]), np.array([30]), np.array([4]), np.array([12]), np.array([8])]
+
+network.Optimize(X,Y,epochs = 100)
+
+while True:
+	print(network.nn)
+	print(network.Run(np.array([int(input("number:"))])))
