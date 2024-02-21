@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as ts
 
-def ReLu(X):
+def ReLU(X):
 
 	if all(X) >= 0:
 		return X
@@ -46,8 +46,8 @@ class NeuralNetwork:
 			Z.append(LayerActivition)
 				
 			match self.ActivitionFunction:
-				case "ReLu":
-					LayerActivition = ReLu(LayerActivition)
+				case "ReLU":
+					LayerActivition = ReLU(LayerActivition)
 				case "Sigmoid":
 					pass
 
@@ -81,7 +81,7 @@ class NeuralNetwork:
 
 					match self.ActivitionFunction:
 						#Multiply El by the derivative of f in respect to the weighted sums of the layer l.
-						case "ReLu":
+						case "ReLU":
 
 							dfdZl = []
 
